@@ -1,3 +1,7 @@
+import logging
+import colorlog
+from colorlog import ColoredFormatter
+
 formatter = ColoredFormatter(
     "%(log_color)s%(levelname) %(message)s",
     datefmt=None,

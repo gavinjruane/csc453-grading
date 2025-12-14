@@ -8,7 +8,6 @@ import shutil
 import tarfile
 import logging
 import colorlog
-from colorlog import ColoredFormatter
 import subprocess
 import os
 
