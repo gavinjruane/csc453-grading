@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 output_files/
 submissions/
+tests/
 
 # C extensions
 *.so

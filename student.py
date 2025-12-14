@@ -2,6 +2,7 @@ from collections.abc import Generator
 
 from exceptions import *
 from config import *
+from test import Test
 
 from pathlib import Path
 import shutil
@@ -136,7 +137,7 @@ class Student:
 
         return
             
-    def run (self, arguments: list[str] = [], look_for: str = "") -> None:
+    def run (self, arguments: list[str] = [], look_for: str = "", capture_output: bool = False, find_program: bool = False) -> Tuple[bool, str]:
         if self._program is None:
             if look_for != "":
                 programs = [ program for program in self.directory.iterdir() if program.is_file() and os.access(program, os.X_OK) and program.name == look_for ]
@@ -149,23 +150,43 @@ class Student:
                 log.error(f"{self.name}'s program not found.")
                 raise ProgramNotFoundError("Program not found.")
 
-        arguments.insert(0, str(self._program))
+        if find_program:
+            arguments.insert(0, str(self._program))
 
         try:
-            program_result = subprocess.run(
-                arguments,
-                cwd=self.directory
-            )
+            if capture_output:
+                program_result = subprocess.run(
+                    arguments,
+                    cwd=self.directory
+                )
+            else:
+                program_result = subprocess.run(
+                    arguments,
+                    cwd=self.directory,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
         except Exception as e:
             log.error(f"{BOLD}{self.name}'s program{RESET} could not run due to exception {e}.")
             raise ProgramError("Program could not run.")
         
         if program_result.returncode != 0:
             log.error(f"{self.name}'s program did not run successfully.'")
+
+            return (False, program_result.stdout)
         else:
             log.info(f"{self.name}'s program ran successfully.")
 
-        return
+            return (True, program_result.stdout)
+
+    def test (self, tests: list["Test"]) -> dict[]:
+        outputs: dict[] = {}
+        
+        for test in tests:
+            outputs[test] = self.run(test.command, capture_output=True)
+
+        return outputs
                     
             
         
