@@ -1,5 +1,7 @@
 from collections.abc import Generator
 
+from exceptions import *
+
 from pathlib import Path
 import shutil
 import tarfile
@@ -26,18 +28,6 @@ log = logging.getLogger()
 
 BOLD = "\x1b[1m"
 RESET = "\x1b[0m"
-
-class MakeError(Exception):
-    ...
-
-class MakefileNotFoundError(Exception):
-    ...
-
-class ProgramError(Exception):
-    ...
-
-class ProgramNotFoundError(Exception):
-    ...
 
 class Test:
     def __init__ (self, location: Path):
