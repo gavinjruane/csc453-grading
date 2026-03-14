@@ -1,0 +1,16 @@
+[project]
+name = "453grader"
+version = "1.1.0"
+dependencies = [
+  "colorlog"
+]
+requires-python = ">=3,9"
+authors = [
+  {name = "Gavin Ruane", email = "me@gavinruane.me"}
+]
+description = "Grading/testing program for CSC 453 at Cal Poly"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = [
+  "LICENSE"
+]
