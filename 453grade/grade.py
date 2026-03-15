@@ -20,6 +20,7 @@ import subprocess
 import shutil
 import os
 from argparse import ArgumentParser
+from enum import StrEnum, auto
 
 BLUE = "\x1b[0;34m"
 RED = "\x1b[0;31m"
@@ -28,6 +29,16 @@ GREEN = "\x1b[0;32m"
 BLACK = "\x1b[0;30m"
 BOLD = "\x1b[1m"
 RESET = "\x1b[0m"
+
+SUBMISSIONS_ZIP = "submissions.zip"
+
+class LogLevel(StrEnum):
+    ERROR = "error"
+    NOTE = "note"
+    STUDENT = "student"
+    SUCCESS = "success"
+    UNKNOWN = auto()
+    
 
 parser = ArgumentParser(
     prog="grade_final",
@@ -39,6 +50,18 @@ parser.add_argument(
     "--clearvisualizer",
     action="store_true",
     help="Clears visualizer directory upon completion of script if used."
+)
+parser.add_argument(
+    "--submissions-name",
+    default=SUBMISSIONS_ZIP,
+    type=str,
+    help=f"Specify a custom name for the {SUBMISSIONS_ZIP} file."
+)
+parser.add_argument(
+    "-d",
+    "--directory",
+    type=str,
+    help="Runs grading process from the specified directory."
 )
 args = parser.parse_args()
 
@@ -56,22 +79,25 @@ class VisualizerError(Exception):
 
 def main ():
     current_dir = Path(__file__).resolve().parent
-    visualizer_env = current_dir / "visualizer_env"
-    input_txt = current_dir / "input.txt"
+    main_dir = Path(args.directory).resolve() if args.directory is not None else current_dir
+    visualizer_env = main_dir / "visualizer_env"
+    input_txt = main_dir / "input.txt"
 
-    submissions = current_dir / "submissions"
+    submissions = main_dir / "submissions"
     if not submissions.exists():
-        print_message(f"Directory 'submissions' does not exist. Creating `submissions`", "note")
+        print_message(f"Directory 'submissions' does not exist. Creating `submissions`", LogLevel.NOTE)
         submissions.mkdir()
 
-    submissions_zip = current_dir / "submissions.zip"
+    submissions_zip = main_dir / args.submissions_name
     if submissions_zip.exists() and len(list(submissions.iterdir())) == 0:
-        print_message(f"Unzipping {submissions_zip.name}.", "note")
+        print_message(f"Unzipping {submissions_zip.name}.", LogLevel.NOTE)
         unzip_submissions(submissions_zip, submissions)
+    else:
+        print_message(f"No \"{submissions_name}\" file found.", LogLevel.ERROR)
 
-    outputs = current_dir / "output_files"
+    outputs = main_dir / "output_files"
     if not outputs.exists():
-        print_message("Directory 'output_files' does not exist. Creating 'output_files'...", "note")
+        print_message("Directory 'output_files' does not exist. Creating 'output_files'...", LogLevel.NOTE)
         outputs.mkdir()
 
     for submission in submissions.iterdir():
@@ -249,19 +275,19 @@ def visualize (student_dir: Path, visualizer_env: Path) -> None:
         
         
 
-def print_message (message: str, type: str, pre_newline=False) -> None:
+def print_message (message: str, type: StrEnum, pre_newline=False) -> None:
     color = ""
     
     match type.lower():
-        case "error":
+        case LogLevel.ERROR:
             color = RED
-        case "note" | "info":
+        case LogLevel.NOTE | "info":
             color = BLUE
-        case "student":
+        case LogLevel.STUDENT:
             color = MAGENTA
-        case "success":
+        case LogLevel.SUCCESS:
             color = GREEN
-        case _:
+        case LogLevel.UNKNOWN | _:
             color = BLACK
 
     if pre_newline:
