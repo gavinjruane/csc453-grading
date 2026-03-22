@@ -1,0 +1,18 @@
+name = "Scheduler"
+
+[make]
+run_make = true
+use_stdout = true
+
+[students]
+
+[students.projects]
+archive.filename = ''
+archive.type = "zip"
+type = "tar.gz"
+
+[students.output]
+directory = ''
+
+[tests]
+test_directory = '/Users/gavinruane/Documents/453example/schedule_tests'
