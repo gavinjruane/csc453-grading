@@ -4,6 +4,12 @@ from pathlib import Path
 
 from student import Student
 
+
+def submissions(submissions: Path) -> Generator[object, None, None]:
+    for archive in submissions.iterdir():
+        yield Student(archive=archive)
+
+
 class Project:
     def __init__(self, config_file: str):
         with open(config_file, "rb") as config:
@@ -12,9 +18,8 @@ class Project:
     def __repr__(self) -> str:
         return str(self.config)
 
-    def projects(cls, submissions: Path) -> Generator[object, None, None]:
-        for archive in submissions.iterdir():
-            yield Student(archive=archive)
 
 newproj = Project("project1.toml")
 print(newproj)
+
+student = Student("none.zip")
