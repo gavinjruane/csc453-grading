@@ -1,5 +1,6 @@
 from asyncio import LimitOverrunError
 from logging import INFO
+from typing import Literal
 from pathlib import Path
 import shutil
 import tarfile
@@ -17,7 +18,7 @@ class Student:
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
         self.name: str = self.archive.stem.split("_")[0]
 
-        self.directory: StudentDirectory | None = StudentDirectory(name = self.name)
+        self.directory: Directory = Directory(name = self.name)
         self.directory.create_directory(parent_directory)
 
         self.readme: Path | None = None
@@ -25,21 +26,20 @@ class Student:
         self.program: Path | None = None
 
     def extract (self, gzip=True) -> None:
-        if self.create_directory():
-            if tarfile.is_tarfile(self.archive):
-                mode: str = "r:gz" if gzip else "r"
-                with tarfile.open(self.archive, mode) as archive:
-                    archive.extractall(path=self.directory, filter="tar")
+        if tarfile.is_tarfile(self.archive):
+            mode: Literal["r", "r:gz"] = "r:gz" if gzip else "r"
+            with tarfile.open(self.archive, mode) as archive:
+                archive.extractall(path=self.directory.path, filter="tar")
 
-                    entries = Student._directory_entries(self.directory)
-                    if len(entries) == 1 and entries[0].is_dir():
-                        self._collapse()
+                entries = self.directory.entries()
+                if len(entries) == 1 and entries[0].is_dir():
+                    self.directory.collapse()
 
         return
 
     def get_readme(self) -> str:
         if self.readme is None:
-            readmes = [ readme for readme in self.directory.glob("README*") ]
+            readmes = [ readme for readme in self.directory.path.glob("README*") ]
             if len(readmes) != 0:
                 self.readme = readmes[0]
             else:
@@ -88,10 +88,10 @@ class Student:
 
 
 
-class StudentDirectory:
+class Directory:
     def __init__(self, name: str):
         self.name: str = name
-        self.directory: Path | None = None
+        self.path: Path = Path()
 
     def create_directory(self, parent_directory: Path) -> bool:
         location: Path = parent_directory / self.name
@@ -99,24 +99,25 @@ class StudentDirectory:
         try:
             location.mkdir()
             logger.announce(f"Successfully created directory '{self.name}'.", LogLevel.NOTE)
-            self.directory = location
+            self.path = location
 
             return True
         except FileExistsError:
             logger.announce(f"Directory '{self.name}' already exists; skipping.", LogLevel.NOTE)
-            self.directory = location
+            self.path = location
 
             return False
         except Exception as exception:
             logger.announce(f"Could not create new directory '{self.name}': {exception}.", LogLevel.ERROR)
-            self.directory = None
+            self.path = Path()
 
             raise
 
     def entries(self, ignores: list[str] = [".DS_Store", ".git"]) -> list[Path]:
-        entries: list[Path] = list(self.directory.iterdir())
-
-        return [ entry for entry in entries if entry.name not in ignores ]
+        if self.path is not None:
+            return get_directory_entries(self.path, ignores)
+        else:
+            return []
 
     def collapse(self, ignores: list[str] = [".DS_Store", ".git"]):
         """
@@ -124,10 +125,12 @@ class StudentDirectory:
         :param ignores: Files to ignore when collapsing
         :return:
         """
-        current: Path = self.directory
+        current: Path | None = self.path
+        if current is None:
+            return
 
         while current.is_dir():
-            entries = Student._directory_entries(directory=current, ignores=ignores)
+            entries = get_directory_entries(directory=current, ignores=ignores)
 
             if len(entries) == 1 and entries[0].is_dir():
                 current = entries[0]
@@ -135,6 +138,13 @@ class StudentDirectory:
                 break
 
         for file in current.iterdir():
-            shutil.move(str(file), str(self.directory))
+            shutil.move(str(file), str(self.path))
 
         return
+
+    
+def get_directory_entries(directory: Path, ignores: list[str] = [".DS_Store", ".git"]) -> list[Path]:
+    entries: list[Path] = list(directory.iterdir())
+    
+    return [ entry for entry in entries if entry.name not in ignores ]
+
