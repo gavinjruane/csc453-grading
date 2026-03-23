@@ -1,5 +1,11 @@
 from pydantic import BaseModel
 
+"""
+configuration.py
+
+Defines the Pydantic schema for project TOML files.
+"""
+
 class MakeConfig(BaseModel):
     run_make: bool
     use_stdout: bool

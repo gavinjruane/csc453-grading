@@ -78,6 +78,13 @@ def resolve_directory(directory: str | None, root: Path = Path(__file__).resolve
 
 
 def unpack_archive(archive: Path, destination: Path, type: str = "tar.gz") -> None:
+    """
+    Unpack an archive to a destination.
+    :param archive: Path to the archive
+    :param destination: Destination to unpack the archive into
+    :param type: Type of the archive (zip or tar.gz)
+    :return: None
+    """
     match type:
         case "tar.gz":
             if tarfile.is_tarfile(archive):
