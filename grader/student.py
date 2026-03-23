@@ -63,21 +63,24 @@ class Student:
                 raise Exception("Makefile not found.")
 
         try:
-            make_result = subprocess.run(
-                ["make", "-f", self._makefile],
-                cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
+            if self.makefile is not None:
+                make_result = subprocess.run(
+                    args=["make", "-f", self.makefile],
+                    cwd=self.directory.path,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
+            else:
+                raise Exception("Makefile not found.")
         except Exception as e:
             logger.announce(f"{logger.BOLD}{self.name}'s Make{logger.RESET} could not run.", LogLevel.ERROR)
             # raise MakeError(f"Make could not run")
             raise Exception("Makefile could not run.")
 
         if make_result.returncode != 0:
-            logger.announce(f"Make did not run successfuly.", LogLevel.ERROR)
-            print(f"{logger.BOLD}Make error:{logger.RESET}\n{make_result.stdout}")
+            logger.announce(f"Make did not run successfully.", LogLevel.ERROR)
+            logger.note(leading="Make error", message=make_result.stdout)
             # raise MakeError(f"Make did not run successfully.")
             raise Exception(f"Make did not run successfully.")
         else:
@@ -114,6 +117,11 @@ class Directory:
             raise
 
     def entries(self, ignores: list[str] = [".DS_Store", ".git"]) -> list[Path]:
+        """
+        Get a list of entries present in the directory
+        :param ignores: Files to ignore when searching
+        :return: A list of entries in the directory
+        """
         if self.path is not None:
             return get_directory_entries(self.path, ignores)
         else:
