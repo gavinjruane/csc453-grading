@@ -1,16 +1,14 @@
 name = "Scheduler"
+root_directory = "../testbench"
 
 [make]
 run_make = true
 use_stdout = true
 
 [submissions]
-archive_filename = 'dell'
+archive_filename = '../ruanegavin-project1.zip'
 archive_type = "zip"
-package_type = "tar.gz"
-
-[outputs]
-directory = 'gell'
+submission_type = "tar.gz"
 
 [tests]
 test_directory = '/Users/gavinruane/Documents/453example/schedule_tests'

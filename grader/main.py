@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
 
+from grader.project import Project
+
 parser = ArgumentParser(
     prog="grader",
     description="Automated CSC 453 grader",
@@ -16,12 +18,13 @@ parser.add_argument(
     "-f",
     "--file",
     type=str,
+    required=True,
     help="The project configuration file to use (.toml format)",
 )
 args = parser.parse_args()
 
 def main():
-    input("hello")
+    project = Project(args.file)
     return
 
 if __name__ == "__main__":

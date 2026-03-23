@@ -1,5 +1,3 @@
-import tomllib
-
 from pydantic import BaseModel
 
 class MakeConfig(BaseModel):
@@ -7,27 +5,23 @@ class MakeConfig(BaseModel):
     use_stdout: bool
 
 class SubmissionsConfig(BaseModel):
+    directory: str | None = None
     archive_filename: str
     archive_type: str
-    package_type: str
+    submission_type: str
 
 class OutputsConfig(BaseModel):
-    directory: str
+    directory: str | None = None
 
 class TestsConfig(BaseModel):
-    test_directory: str
+    test_directory: str | None = None
 
 class Configuration(BaseModel):
     name: str
+    root_directory: str | None = None
+
     make: MakeConfig
     submissions: SubmissionsConfig
-    outputs: OutputsConfig
+    outputs: OutputsConfig | None = None
     tests: TestsConfig
-
-
-with open("project1.toml", "rb") as config:
-    file = tomllib.load(config)
-    rt = Configuration.model_validate(file)
-
-    print(rt.make.run_make)
 
