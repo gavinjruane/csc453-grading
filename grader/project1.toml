@@ -4,15 +4,13 @@ name = "Scheduler"
 run_make = true
 use_stdout = true
 
-[students]
+[submissions]
+archive_filename = 'dell'
+archive_type = "zip"
+package_type = "tar.gz"
 
-[students.projects]
-archive.filename = ''
-archive.type = "zip"
-type = "tar.gz"
-
-[students.output]
-directory = ''
+[outputs]
+directory = 'gell'
 
 [tests]
 test_directory = '/Users/gavinruane/Documents/453example/schedule_tests'

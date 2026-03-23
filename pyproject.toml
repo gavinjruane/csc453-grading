@@ -2,7 +2,8 @@
 name = "grader"
 version = "1.1.0"
 dependencies = [
-  "colorlog"
+  "colorlog",
+  "pydantic"
 ]
 requires-python = ">=3,9"
 authors = [

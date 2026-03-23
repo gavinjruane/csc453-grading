@@ -1,15 +1,11 @@
-from asyncio import LimitOverrunError
-from logging import INFO
 from typing import Literal
 from pathlib import Path
 import shutil
 import tarfile
-import logging
-import colorlog
 import subprocess
 import os
 
-from logger import logger, LogLevel
+from logger import logger
 
 class Student:
     def __init__(self, archive: Path, parent_directory: Path):
@@ -43,22 +39,21 @@ class Student:
             if len(readmes) != 0:
                 self.readme = readmes[0]
             else:
-                logger.announce(f"{self.name}´s README not found.", LogLevel.WARNING)
+                logger.error(f"{self.name}´s README not found.")
                 return ""
 
         text = self.readme.read_text()
 
         return text
 
-    def make (self) -> None:
+    def make(self) -> None:
         if self.makefile is None:
             makefiles = [ file for file in self.directory.entries() if file.is_file() and file.name.lower() == "makefile" ]
             if len(makefiles) != 0:
                 self.makefile = makefiles[0]
-                logger.announce(f"{logger.BOLD}{self.name}'s Makefile{logger.RESET} (path: {self.makefile})", LogLevel.INFO)
-
+                logger.info(f"{self.name}'s Makefile was found (path: {self.makefile}).")
             else:
-                logger.announce(f"{self.name}'s Makefile not found.'", LogLevel.ERROR)
+                logger.error(f"{self.name}'s Makefile was not found.")
                 # raise MakefileNotFoundError("Makefile not found")
                 raise Exception("Makefile not found.")
 
@@ -74,17 +69,17 @@ class Student:
             else:
                 raise Exception("Makefile not found.")
         except Exception as e:
-            logger.announce(f"{logger.BOLD}{self.name}'s Make{logger.RESET} could not run.", LogLevel.ERROR)
+            logger.error(f"{self.name}'s Makefile did not run.")
             # raise MakeError(f"Make could not run")
-            raise Exception("Makefile could not run.")
+            raise Exception(f"Makefile could not run {e}.")
 
         if make_result.returncode != 0:
-            logger.announce(f"Make did not run successfully.", LogLevel.ERROR)
-            logger.note(leading="Make error", message=make_result.stdout)
+            logger.warning(f"{self.name}'s Makefile failed to run successfully.")
+            logger.info(make_result.stdout)
             # raise MakeError(f"Make did not run successfully.")
             raise Exception(f"Make did not run successfully.")
         else:
-            logger.announce(f"{self.name}'s Makefile ran successfully.", LogLevel.SUCCESS)
+            logger.info(f"{self.name}'s Makefile ran successfully.")
 
         return
 
@@ -101,17 +96,17 @@ class Directory:
 
         try:
             location.mkdir()
-            logger.announce(f"Successfully created directory '{self.name}'.", LogLevel.NOTE)
+            logger.info(f"Successfully created directory '{self.name}'.")
             self.path = location
 
             return True
         except FileExistsError:
-            logger.announce(f"Directory '{self.name}' already exists; skipping.", LogLevel.NOTE)
+            logger.info(f"Directory '{self.name}' already exists; skipping.")
             self.path = location
 
             return False
         except Exception as exception:
-            logger.announce(f"Could not create new directory '{self.name}': {exception}.", LogLevel.ERROR)
+            logger.error(f"Could not create new directory '{self.name}': {exception}.")
             self.path = Path()
 
             raise

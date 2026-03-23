@@ -1,4 +1,3 @@
-import tomllib
 from collections.abc import Generator
 from pathlib import Path
 
@@ -10,13 +9,13 @@ def submissions(submissions: Path) -> Generator[object, None, None]:
         yield Student(archive=archive)
 
 
-class Project:
-    def __init__(self, config_file: str):
-        with open(config_file, "rb") as config:
-            self.config = tomllib.load(config)
-
-    def __repr__(self) -> str:
-        return str(self.config)
+# class Project:
+#     def __init__(self, config_file: str):
+#         with open(config_file, "rb") as config:
+#             self.config = tomllib.load(config)
+#
+#     def __repr__(self) -> str:
+#         return str(self.config)
 
 
 newproj = Project("project1.toml")
