@@ -7,6 +7,8 @@ class Test:
         self.path = tests_directory / self.name
         self.command = Test._command_from_file(self.path)
 
+        print(self.command)
+
     @classmethod
     def _command_from_file (cls, location: Path):
         # Assumes test is written on the first line of the file

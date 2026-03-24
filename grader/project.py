@@ -89,6 +89,16 @@ class Project:
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             student.find_program(look_for=self.config.submissions.program)
+            if wait_after_step: input(WAIT_AFTER_STEP)
+
+            result, output = student.run(
+                arguments=self.tests[0].command,
+                capture_output=True,
+                insert_program_name=False
+            )
+            logger.info(f"Student {student.name} finished with result: {result}")
+            logger.info(f"Student {student.name} finished with output: {output}")
+            if wait_after_step: input(WAIT_AFTER_STEP)
 
             if wait_at_end: input(WAIT_AT_END)
             print("\n\n")

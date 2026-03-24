@@ -109,7 +109,7 @@ class Student:
             capture_output: bool = False,
             find_program: bool = False,
             insert_program_name: bool = True
-    ) -> tuple[bool, str]:
+            ) -> tuple[bool, str]:
         if arguments is None:
             arguments = [self.program]
 
@@ -120,16 +120,17 @@ class Student:
             if capture_output:
                 program_result = subprocess.run(
                     arguments,
-                    cwd=self.directory
-                )
-            else:
-                program_result = subprocess.run(
-                    arguments,
                     cwd=self.directory,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True
                 )
+            else:
+                program_result = subprocess.run(
+                    arguments,
+                    cwd=self.directory
+                )
+
         except Exception as e:
             logger.error(f"{LogColor.BOLD}{self.name}'s program{LogColor.RESET} could not run due to exception {e}.")
             raise Exception("Program could not run.")
