@@ -15,7 +15,7 @@ handler = colorlog.StreamHandler(sys.stdout)
 formatter = ColoredFormatter(
     fmt='%(log_color)s%(levelname)s: %(reset)s%(message)s',
     reset=True,
-    log_colors = {
+    log_colors={
         "DEBUG": "cyan",
         "INFO": "green",
         "WARNING": "yellow",
@@ -25,6 +25,7 @@ formatter = ColoredFormatter(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
 
 class LogColor(StrEnum):
     BOLD = "\x1b[1m"

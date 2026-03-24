@@ -1,4 +1,4 @@
-name = "Scheduler"
+name = "MemSim"
 root_directory = "../testbench"
 
 [make]
@@ -11,4 +11,4 @@ archive_type = "zip"
 submission_type = "tar.gz"
 
 [tests]
-test_directory = '/Users/gavinruane/Documents/453example/schedule_tests'
+test_directory = '../tests'

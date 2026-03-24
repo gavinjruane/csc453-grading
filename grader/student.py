@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 from grader.directory import resolve_directory, get_directory_entries, collapse
+from grader.test import Test
 from logger import logger
 
 
@@ -86,3 +87,5 @@ class Student:
 
         return
 
+    def test(self, test: Test):
+        pass

@@ -23,10 +23,12 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+
 def main():
     project = Project(args.file)
-    project.grade(wait=True)
+    project.grade(wait_after_step=True, wait_at_end=True)
     return
+
 
 if __name__ == "__main__":
     main()

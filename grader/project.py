@@ -8,6 +8,7 @@ from grader.configuration import Configuration
 from grader.logger import logger, LogColor
 from grader.student import Student
 from grader.directory import collapse, resolve_directory
+from grader.test import Test
 
 
 def students(submissions_directory: Path, outputs_directory: Path) -> Generator[Student, None, None]:
@@ -16,6 +17,10 @@ def students(submissions_directory: Path, outputs_directory: Path) -> Generator[
             archive=archive,
             parent_directory=outputs_directory
         )
+
+
+def tests(tests_directory: Path) -> list[Test]:
+    return [Test(name=test.name, tests_directory=tests_directory) for test in tests_directory.iterdir()]
 
 
 class Project:
@@ -46,12 +51,17 @@ class Project:
             fallback="outputs"
         )
 
-        self.tests_directory: Path = resolve_directory(
-            directory=self.config.tests.directory if self.config.tests else None,
-            root=self.root_directory,
-            fallback="tests",
-            create_on_fail=False
-        )
+        if self.config.tests:
+            self.tests_directory: Path | None = resolve_directory(
+                directory=self.config.tests.directory if self.config.tests else None,
+                root=self.root_directory,
+                fallback="tests",
+                create_on_fail=False
+            )
+            self.tests: list[Test] = tests(self.tests_directory)
+            logger.info(f"Found tests at {self.tests_directory} and imported them")
+        else:
+            self.tests_directory: Path | None = None
 
         self.submissions_archive: Path = Path(self.config.submissions.archive_filename)
         if self.submissions_archive.exists():
@@ -66,12 +76,19 @@ class Project:
             logger.critical(f"No archive at {self.submissions_archive}")
             raise Exception(f"No archive at {self.submissions_archive}")
 
-    def grade(self, wait=False):
+    def grade(self, wait_after_step=False, wait_at_end=False) -> None:
+        WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
+        WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
+
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory):
             student.extract()
+            if wait_after_step: input(WAIT_AFTER_STEP)
+
             print(student.get_readme())
-            if wait: input(f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}")
+            if wait_after_step: input(WAIT_AFTER_STEP)
+
+            if wait_at_end: input(WAIT_AT_END)
             print("\n\n")
 
 
