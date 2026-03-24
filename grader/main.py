@@ -25,6 +25,7 @@ args = parser.parse_args()
 
 def main():
     project = Project(args.file)
+    project.grade(wait=True)
     return
 
 if __name__ == "__main__":

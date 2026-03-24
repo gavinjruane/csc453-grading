@@ -20,7 +20,7 @@ class OutputsConfig(BaseModel):
     directory: str | None = None
 
 class TestsConfig(BaseModel):
-    test_directory: str | None = None
+    directory: str | None = None
 
 class Configuration(BaseModel):
     name: str
@@ -29,5 +29,5 @@ class Configuration(BaseModel):
     make: MakeConfig
     submissions: SubmissionsConfig
     outputs: OutputsConfig | None = None
-    tests: TestsConfig
+    tests: TestsConfig | None = None
 

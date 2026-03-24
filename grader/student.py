@@ -3,7 +3,7 @@ import tarfile
 from pathlib import Path
 from typing import Literal
 
-from grader.directory import Directory
+from grader.directory import resolve_directory, get_directory_entries, collapse
 from logger import logger
 
 
@@ -14,8 +14,11 @@ class Student:
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
         self.name: str = self.archive.stem.split("_")[0]
 
-        self.directory: Directory = Directory(name = self.name)
-        self.directory.create_directory(parent_directory)
+        self.directory: Path = resolve_directory(
+            directory=None,
+            root=parent_directory,
+            fallback=self.name
+        )
 
         self.readme: Path | None = None
         self.makefile: Path | None = None
@@ -25,17 +28,17 @@ class Student:
         if tarfile.is_tarfile(self.archive):
             mode: Literal["r", "r:gz"] = "r:gz" if gzip else "r"
             with tarfile.open(self.archive, mode) as archive:
-                archive.extractall(path=self.directory.path, filter="tar")
+                archive.extractall(path=self.directory, filter="tar")
 
-                entries = self.directory.entries()
+                entries = get_directory_entries(self.directory)
                 if len(entries) == 1 and entries[0].is_dir():
-                    self.directory.collapse()
+                    collapse(self.directory)
 
         return
 
     def get_readme(self) -> str:
         if self.readme is None:
-            readmes = [ readme for readme in self.directory.path.glob("README*") ]
+            readmes = [ readme for readme in self.directory.glob("README*") ]
             if len(readmes) != 0:
                 self.readme = readmes[0]
             else:
@@ -48,7 +51,7 @@ class Student:
 
     def make(self) -> None:
         if self.makefile is None:
-            makefiles = [ file for file in self.directory.entries() if file.is_file() and file.name.lower() == "makefile" ]
+            makefiles = [ file for file in get_directory_entries(self.directory) if file.is_file() and file.name.lower() == "makefile" ]
             if len(makefiles) != 0:
                 self.makefile = makefiles[0]
                 logger.info(f"{self.name}'s Makefile was found (path: {self.makefile}).")
@@ -61,7 +64,7 @@ class Student:
             if self.makefile is not None:
                 make_result = subprocess.run(
                     args=["make", "-f", self.makefile],
-                    cwd=self.directory.path,
+                    cwd=self.directory,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True

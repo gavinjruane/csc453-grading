@@ -2,15 +2,20 @@ import tarfile
 import tomllib
 import zipfile
 from pathlib import Path
-from unittest import case
+from typing import Generator
 
 from grader.configuration import Configuration
-from grader.logger import logger
+from grader.logger import logger, LogColor
+from grader.student import Student
+from grader.directory import collapse, resolve_directory
 
 
-# def submissions(submissions: Path) -> Generator[object, None, None]:
-#     for archive in submissions.iterdir():
-#         yield Student(archive=archive)
+def students(submissions_directory: Path, outputs_directory: Path) -> Generator[Student, None, None]:
+    for archive in submissions_directory.iterdir():
+        yield Student(
+            archive=archive,
+            parent_directory=outputs_directory
+        )
 
 
 class Project:
@@ -41,6 +46,13 @@ class Project:
             fallback="outputs"
         )
 
+        self.tests_directory: Path = resolve_directory(
+            directory=self.config.tests.directory if self.config.tests else None,
+            root=self.root_directory,
+            fallback="tests",
+            create_on_fail=False
+        )
+
         self.submissions_archive: Path = Path(self.config.submissions.archive_filename)
         if self.submissions_archive.exists():
             logger.info(f"Found archive at {self.submissions_archive}")
@@ -54,27 +66,13 @@ class Project:
             logger.critical(f"No archive at {self.submissions_archive}")
             raise Exception(f"No archive at {self.submissions_archive}")
 
-
-def resolve_directory(directory: str | None, root: Path = Path(__file__).resolve().parent, fallback: str = "") -> Path:
-    """
-    Attempts to resolve the location of a directory. A new directory can be created if it doesn't exist.
-    :param directory: Path (or name) of the directory to look for
-    :param root: Root directory of the project
-    :param fallback: Fallback name in the event that the directory doesn't exist
-    :return: A Path object representing the location of the found/new directory
-    """
-    if directory is None:
-        new_directory = root / fallback
-    else:
-        new_directory = Path(directory).resolve()
-
-    if not new_directory.exists():
-        logger.info(f"Creating new directory at {new_directory}")
-        new_directory.mkdir()
-    else:
-        logger.info(f"Found directory at {new_directory}")
-
-    return new_directory
+    def grade(self, wait=False):
+        for student in students(submissions_directory=self.submissions_directory,
+                                outputs_directory=self.outputs_directory):
+            student.extract()
+            print(student.get_readme())
+            if wait: input(f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}")
+            print("\n\n")
 
 
 def unpack_archive(archive: Path, destination: Path, type: str = "tar.gz") -> None:

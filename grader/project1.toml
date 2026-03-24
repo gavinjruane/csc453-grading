@@ -6,7 +6,7 @@ run_make = true
 use_stdout = true
 
 [submissions]
-archive_filename = '../ruanegavin-project1.zip'
+archive_filename = '../submissions.zip'
 archive_type = "zip"
 submission_type = "tar.gz"
 

@@ -1,5 +1,7 @@
 import sys
 import logging
+from enum import StrEnum
+
 import colorlog
 from colorlog import ColoredFormatter
 
@@ -24,15 +26,15 @@ formatter = ColoredFormatter(
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# class LogColor(StrEnum):
-#     BOLD = "\x1b[1m"
-#     RESET = "\x1b[0m"
-#     BLUE = "\x1b[0;34m"
-#     RED = "\x1b[0;31m"
-#     MAGENTA = "\x1b[0;35m"
-#     GREEN = "\x1b[0;32m"
-#     YELLOW = "\x1b[0;33m"
-#     BLACK = "\x1b[0;30m"
+class LogColor(StrEnum):
+    BOLD = "\x1b[1m"
+    RESET = "\x1b[0m"
+    BLUE = "\x1b[0;34m"
+    RED = "\x1b[0;31m"
+    MAGENTA = "\x1b[0;35m"
+    GREEN = "\x1b[0;32m"
+    YELLOW = "\x1b[0;33m"
+    BLACK = "\x1b[0;30m"
 #
 #
 # class LogLevel(StrEnum):
