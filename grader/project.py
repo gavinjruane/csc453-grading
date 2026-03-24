@@ -88,6 +88,8 @@ class Project:
             print(student.get_readme())
             if wait_after_step: input(WAIT_AFTER_STEP)
 
+            student.find_program(look_for=self.config.submissions.program)
+
             if wait_at_end: input(WAIT_AT_END)
             print("\n\n")
 

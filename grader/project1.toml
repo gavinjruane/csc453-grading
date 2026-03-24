@@ -9,6 +9,7 @@ use_stdout = true
 archive_filename = '../submissions.zip'
 archive_type = "zip"
 submission_type = "tar.gz"
+program = "memSim"
 
 [tests]
 test_directory = '../tests'

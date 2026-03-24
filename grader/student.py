@@ -1,9 +1,11 @@
+import os
 import subprocess
 import tarfile
 from pathlib import Path
 from typing import Literal
 
 from grader.directory import resolve_directory, get_directory_entries, collapse
+from grader.logger import LogColor
 from grader.test import Test
 from logger import logger
 
@@ -11,7 +13,7 @@ from logger import logger
 class Student:
     def __init__(self, archive: Path, parent_directory: Path):
         self.archive: Path = archive
-    
+
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
         self.name: str = self.archive.stem.split("_")[0]
 
@@ -25,7 +27,7 @@ class Student:
         self.makefile: Path | None = None
         self.program: Path | None = None
 
-    def extract (self, gzip=True) -> None:
+    def extract(self, gzip=True) -> None:
         if tarfile.is_tarfile(self.archive):
             mode: Literal["r", "r:gz"] = "r:gz" if gzip else "r"
             with tarfile.open(self.archive, mode) as archive:
@@ -39,7 +41,7 @@ class Student:
 
     def get_readme(self) -> str:
         if self.readme is None:
-            readmes = [ readme for readme in self.directory.glob("README*") ]
+            readmes = [readme for readme in self.directory.glob("README*")]
             if len(readmes) != 0:
                 self.readme = readmes[0]
             else:
@@ -52,7 +54,8 @@ class Student:
 
     def make(self) -> None:
         if self.makefile is None:
-            makefiles = [ file for file in get_directory_entries(self.directory) if file.is_file() and file.name.lower() == "makefile" ]
+            makefiles = [file for file in get_directory_entries(self.directory) if
+                         file.is_file() and file.name.lower() == "makefile"]
             if len(makefiles) != 0:
                 self.makefile = makefiles[0]
                 logger.info(f"{self.name}'s Makefile was found (path: {self.makefile}).")
@@ -86,6 +89,59 @@ class Student:
             logger.info(f"{self.name}'s Makefile ran successfully.")
 
         return
+
+    def find_program(self, look_for: str | None):
+        if look_for is not None:
+            programs = [program for program in self.directory.iterdir() if
+                        program.is_file() and os.access(program, os.X_OK) and program.name == look_for]
+        else:
+            programs = [program for program in self.directory.iterdir() if
+                        program.is_file() and os.access(program, os.X_OK)]
+        if len(programs) != 0:
+            self.program = programs[0]
+            logger.info(f"{self.name}'s program (path: {self.program})")
+        else:
+            logger.error(f"{self.name}'s program not found.")
+            raise Exception("Program not found.")
+
+    def run(self,
+            arguments: list[str] | None = None,
+            capture_output: bool = False,
+            find_program: bool = False,
+            insert_program_name: bool = True
+    ) -> tuple[bool, str]:
+        if arguments is None:
+            arguments = [self.program]
+
+        if insert_program_name:
+            arguments.insert(0, str(self.program))
+
+        try:
+            if capture_output:
+                program_result = subprocess.run(
+                    arguments,
+                    cwd=self.directory
+                )
+            else:
+                program_result = subprocess.run(
+                    arguments,
+                    cwd=self.directory,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
+        except Exception as e:
+            logger.error(f"{LogColor.BOLD}{self.name}'s program{LogColor.RESET} could not run due to exception {e}.")
+            raise Exception("Program could not run.")
+
+        if program_result.returncode != 0:
+            logger.warning(f"{self.name}'s program did not run successfully.'")
+
+            return False, str(program_result.stdout)
+        else:
+            logger.info(f"{self.name}'s program ran successfully.")
+
+            return True, str(program_result.stdout)
 
     def test(self, test: Test):
         pass
