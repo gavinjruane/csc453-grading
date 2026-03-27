@@ -1,4 +1,4 @@
-name = "MemSim"
+name = "Schedule"
 root_directory = "../testbench"
 
 [make]
@@ -9,7 +9,8 @@ use_stdout = true
 archive_filename = '../submissions.zip'
 archive_type = "zip"
 submission_type = "tar.gz"
-program = "memSim"
+program = "schedule"
 
 [tests]
-test_directory = '../tests'
+directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project1/project1_grading/schedule_tests'
+givens_directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project1/project1_grading/givens'

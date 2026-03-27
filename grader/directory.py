@@ -38,6 +38,10 @@ def resolve_directory(
     return new_directory
 
 
+def copy_to_directory(directory: Path, item: Path) -> None:
+    shutil.copy(str(item), str(directory))
+
+
 def collapse(directory: Path, ignores: list[str] = [".DS_Store", ".git"]):
     """
     Collapse the (potentially) nested directory entries into a single directory.

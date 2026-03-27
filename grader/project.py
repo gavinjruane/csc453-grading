@@ -7,16 +7,22 @@ from typing import Generator
 from grader.configuration import Configuration
 from grader.logger import logger, LogColor
 from grader.student import Student
-from grader.directory import collapse, resolve_directory
-from grader.test import Test
+from grader.directory import resolve_directory
+from grader.test import Test, Given
 
 
-def students(submissions_directory: Path, outputs_directory: Path) -> Generator[Student, None, None]:
+def students(submissions_directory: Path, outputs_directory: Path, givens_directory: Path) -> Generator[
+    Student, None, None]:
     for archive in submissions_directory.iterdir():
         yield Student(
             archive=archive,
-            parent_directory=outputs_directory
+            parent_directory=outputs_directory,
+            givens=givens(givens_directory)
         )
+
+
+def givens(givens_directory: Path) -> list[Given]:
+    return [Given(name=given.name, givens_directory=givens_directory) for given in givens_directory.iterdir()]
 
 
 def tests(tests_directory: Path) -> list[Test]:
@@ -60,8 +66,18 @@ class Project:
             )
             self.tests: list[Test] = tests(self.tests_directory)
             logger.info(f"Found tests at {self.tests_directory} and imported them")
+
+            self.givens_directory: Path | None = resolve_directory(
+                directory=self.config.tests.givens_directory if self.config.tests else None,
+                root=self.root_directory,
+                fallback="givens",
+                create_on_fail=False
+            )
+            self.givens: list[Given] = givens(self.givens_directory)
+            logger.info(f"Found givens at {self.givens_directory} and imported them")
         else:
             self.tests_directory: Path | None = None
+            self.givens_directory: Path | None = None
 
         self.submissions_archive: Path = Path(self.config.submissions.archive_filename)
         if self.submissions_archive.exists():
@@ -70,7 +86,7 @@ class Project:
             unpack_archive(
                 archive=self.submissions_archive,
                 destination=self.submissions_directory,
-                type=self.config.submissions.archive_type
+                archive_type=self.config.submissions.archive_type
             )
         else:
             logger.critical(f"No archive at {self.submissions_archive}")
@@ -81,14 +97,26 @@ class Project:
         WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
 
         for student in students(submissions_directory=self.submissions_directory,
-                                outputs_directory=self.outputs_directory):
+                                outputs_directory=self.outputs_directory,
+                                givens_directory=self.givens_directory):
             student.extract()
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             print(student.get_readme())
             if wait_after_step: input(WAIT_AFTER_STEP)
 
-            student.find_program(look_for=self.config.submissions.program)
+            try:
+                student.make()
+            except Exception as e:
+                logger.warning(f"Make finished unsuccessfully: {e}")
+                continue
+            if wait_after_step: input(WAIT_AFTER_STEP)
+
+            try:
+                student.find_program(look_for=self.config.submissions.program)
+            except Exception as e:
+                logger.warning(f"Find program finished unsuccessfully: {e}")
+                continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             result, output = student.run(
@@ -104,15 +132,15 @@ class Project:
             print("\n\n")
 
 
-def unpack_archive(archive: Path, destination: Path, type: str = "tar.gz") -> None:
+def unpack_archive(archive: Path, destination: Path, archive_type: str = "tar.gz") -> None:
     """
     Unpack an archive to a destination.
     :param archive: Path to the archive
     :param destination: Destination to unpack the archive into
-    :param type: Type of the archive (zip or tar.gz)
+    :param archive_type: Type of the archive (zip or tar.gz)
     :return: None
     """
-    match type:
+    match archive_type:
         case "tar.gz":
             if tarfile.is_tarfile(archive):
                 with tarfile.open(archive) as tar:

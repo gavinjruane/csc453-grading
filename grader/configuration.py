@@ -22,6 +22,7 @@ class OutputsConfig(BaseModel):
 
 class TestsConfig(BaseModel):
     directory: str | None = None
+    givens_directory: str | None = None
 
 class Configuration(BaseModel):
     name: str

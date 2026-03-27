@@ -4,14 +4,14 @@ import tarfile
 from pathlib import Path
 from typing import Literal
 
-from grader.directory import resolve_directory, get_directory_entries, collapse
+from grader.directory import resolve_directory, get_directory_entries, collapse, copy_to_directory
 from grader.logger import LogColor
-from grader.test import Test
+from grader.test import Test, Given
 from logger import logger
 
 
 class Student:
-    def __init__(self, archive: Path, parent_directory: Path):
+    def __init__(self, archive: Path, parent_directory: Path, givens: list[Given]):
         self.archive: Path = archive
 
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
@@ -22,6 +22,8 @@ class Student:
             root=parent_directory,
             fallback=self.name
         )
+        for given in givens:
+            copy_to_directory(self.directory, given.path)
 
         self.readme: Path | None = None
         self.makefile: Path | None = None
