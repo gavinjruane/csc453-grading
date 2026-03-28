@@ -2,6 +2,7 @@ import difflib
 import os
 import subprocess
 import tarfile
+from enum import IntEnum
 from pathlib import Path
 from typing import Literal
 
@@ -9,6 +10,11 @@ from grader.directory import resolve_directory, get_directory_entries, collapse,
 from grader.logger import LogColor
 from grader.test import Test, Given
 from logger import logger
+
+class ProcessState(IntEnum):
+    SUCCESS = 0
+    FAILURE = 1
+    TIMEOUT = 2
 
 
 class Student:
@@ -112,7 +118,7 @@ class Student:
             arguments: list[str] | None = None,
             print_stdout: bool = False,
             insert_program_name: bool = True,
-            ) -> tuple[bool, list[str]]:
+            ) -> tuple[ProcessState, list[str]]:
         global process
 
         if arguments is None:
@@ -140,6 +146,7 @@ class Student:
         except subprocess.TimeoutExpired:
             logger.error(f"{self.name}'s program timed out.")
             process.kill()
+            return ProcessState.TIMEOUT, captured_output
         except Exception as e:
             logger.error(f"{LogColor.BOLD}{self.name}'s program{LogColor.RESET} could not run due to exception {e}.")
             raise Exception("Program could not run.")
@@ -147,11 +154,11 @@ class Student:
         if process.returncode != 0:
             logger.warning(f"{self.name}'s program did not run successfully.'")
 
-            return False, captured_output
+            return ProcessState.FAILURE, captured_output
         else:
             logger.debug(f"{self.name}'s program ran successfully.")
 
-            return True, captured_output
+            return ProcessState.SUCCESS, captured_output
 
     def test(self,
              test: Test,

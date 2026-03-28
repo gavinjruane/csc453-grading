@@ -6,7 +6,7 @@ from typing import Generator
 
 from grader.configuration import Configuration
 from grader.logger import logger, LogColor
-from grader.student import Student
+from grader.student import Student, ProcessState
 from grader.directory import resolve_directory
 from grader.test import Test, Given
 
@@ -143,7 +143,7 @@ class Project:
             # TODO: fix this to make it workable for non-test based projects
             for test in tests(tests_directory=self.tests_directory):
                 result = student.test(test, timeout=timeout, print_test=True, use_diff=use_diff, print_stdout=False, html_diff=use_diff)
-                if result["run_result"]:
+                if result["run_result"] == ProcessState.SUCCESS:
                     logger.debug(f"Student {student.name} test finished successfully.")
                     if use_diff and not result["diff"]:
                         logger.info(f"Student {student.name} files differ.")
@@ -151,8 +151,14 @@ class Project:
                         issues += 1
                     else:
                         logger.info(f"Student {student.name} files match.")
-                else:
+                elif result["run_result"] == ProcessState.FAILURE:
                     logger.debug(f"Student {student.name} test did not finish successfully.")
+                    failures.append(student)
+                elif result["run_result"] == ProcessState.TIMEOUT:
+                    logger.debug(f"Student {student.name} test timed out.")
+                    failures.append(student)
+                else:
+                    logger.debug(f"Student {student.name} test finished with an unexpected error code.")
                     failures.append(student)
                 if wait_after_step: input(WAIT_AFTER_STEP)
             if wait_after_step: input(WAIT_AFTER_STEP)
