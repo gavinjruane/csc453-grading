@@ -161,7 +161,6 @@ class Project:
                         logger.info(f"Student {student.name} files differ.")
                         logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
                         student.test_results[test.name] = TestState.PARTIAL
-                        issues += 1
                     else:
                         logger.info(f"Student {student.name} files match.")
                 elif result["run_result"] == ProcessState.FAILURE:
@@ -178,11 +177,6 @@ class Project:
 
             if wait_at_end: input(WAIT_AT_END)
             print("\n\n")
-
-            if issues == 0:
-                self.successes.append(student)
-            else:
-                self.partials.append(student)
 
         return
 
