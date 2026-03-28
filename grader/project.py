@@ -1,6 +1,7 @@
 import tarfile
 import tomllib
 import zipfile
+from enum import IntEnum
 from pathlib import Path
 from typing import Generator
 
@@ -10,14 +11,17 @@ from grader.student import Student, ProcessState
 from grader.directory import resolve_directory
 from grader.test import Test, Given
 
+WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
+WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
 
-def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given]
+def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given], tests: list[Test]
              ) -> Generator[Student, None, None]:
     for archive in submissions_directory.iterdir():
         yield Student(
             archive=archive,
             parent_directory=outputs_directory,
-            givens=givens
+            givens=givens,
+            tests=tests
         )
 
 
@@ -29,8 +33,20 @@ def tests(tests_directory: Path) -> list[Test]:
     return [Test(name=test.name, tests_directory=tests_directory) for test in tests_directory.iterdir()]
 
 
+class TestState(IntEnum):
+    SUCCESS = 0
+    FAILURE = 1
+    PARTIAL = 2
+    INCOMPLETE = 3
+    NEVER = 4
+
+
 class Project:
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, timeout: int | None = None):
+        self.failures = []
+        self.partials = []
+        self.successes = []
+
         with open(config_file, "rb") as config:
             config_file = tomllib.load(config)
             try:
@@ -40,6 +56,7 @@ class Project:
                 raise Exception("Invalid config file")
 
         self.name = self.config.name
+        self.timeout = timeout if timeout is not None else self.config.tests.timeout
 
         current_directory = Path(__file__).resolve().parent
         self.root_directory = Path(
@@ -94,22 +111,15 @@ class Project:
 
     def grade(
             self,
-            timeout: int,
             wait_after_step=False,
             wait_at_end=False,
             allow_skips=False,
             use_diff=True
-    ) -> tuple[list, list, list]:
-        WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
-        WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
-
-        failures: list[Student] = []
-        some_errors: list[Student] = []
-        successes: list[Student] = []
-
+    ) -> None:
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
-                                givens=self.givens):
+                                givens=self.givens,
+                                tests=self.tests):
             issues: int = 0
 
             print(f"\n{LogColor.BOLD}Student {student.name}{LogColor.RESET}")
@@ -128,7 +138,7 @@ class Project:
                 student.make()
             except Exception as e:
                 logger.warning(f"Make finished unsuccessfully: {e}")
-                failures.append(student)
+                self.failures.append(student)
                 continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
@@ -136,30 +146,33 @@ class Project:
                 student.find_program(look_for=self.config.submissions.program)
             except Exception as e:
                 logger.warning(f"Find program finished unsuccessfully: {e}")
-                failures.append(student)
+                self.failures.append(student)
                 continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             # TODO: fix this to make it workable for non-test based projects
-            for test in tests(tests_directory=self.tests_directory):
-                result = student.test(test, timeout=timeout, print_test=True, use_diff=use_diff, print_stdout=False, html_diff=use_diff)
+            # test_map: dict =
+            for test in self.tests:
+                result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
+                                      print_stdout=False, html_diff=use_diff)
                 if result["run_result"] == ProcessState.SUCCESS:
                     logger.debug(f"Student {student.name} test finished successfully.")
                     if use_diff and not result["diff"]:
                         logger.info(f"Student {student.name} files differ.")
                         logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
+                        student.test_results[test.name] = TestState.PARTIAL
                         issues += 1
                     else:
                         logger.info(f"Student {student.name} files match.")
                 elif result["run_result"] == ProcessState.FAILURE:
                     logger.debug(f"Student {student.name} test did not finish successfully.")
-                    failures.append(student)
+                    self.partials.append(student)
                 elif result["run_result"] == ProcessState.TIMEOUT:
                     logger.debug(f"Student {student.name} test timed out.")
-                    failures.append(student)
+                    self.partials.append(student)
                 else:
                     logger.debug(f"Student {student.name} test finished with an unexpected error code.")
-                    failures.append(student)
+                    self.partials.append(student)
                 if wait_after_step: input(WAIT_AFTER_STEP)
             if wait_after_step: input(WAIT_AFTER_STEP)
 
@@ -167,11 +180,11 @@ class Project:
             print("\n\n")
 
             if issues == 0:
-                successes.append(student)
+                self.successes.append(student)
             else:
-                some_errors.append(student)
+                self.partials.append(student)
 
-        return failures, some_errors, successes
+        return
 
 
 def unpack_archive(archive: Path, destination: Path, archive_type: str = "tar.gz") -> None:

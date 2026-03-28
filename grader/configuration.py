@@ -21,6 +21,7 @@ class OutputsConfig(BaseModel):
     directory: str | None = None
 
 class TestsConfig(BaseModel):
+    timeout: int | None = None
     directory: str | None = None
     givens_directory: str | None = None
 

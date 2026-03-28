@@ -38,11 +38,11 @@ args = parser.parse_args()
 
 
 def main():
-    project = Project(args.file)
+    project = Project(args.file, timeout=args.timeout)
     if args.interactive:
-        failures, some_errors, successes = project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True, timeout=args.timeout)
+        failures, some_errors, successes = project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True)
     else:
-        failures, some_errors, successes = project.grade(timeout=args.timeout)
+        failures, some_errors, successes = project.grade()
     print(f"Failures: {failures}")
     print(f"Some errors: {some_errors}")
     print(f"Successes: {successes}")

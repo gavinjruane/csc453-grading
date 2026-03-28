@@ -8,6 +8,7 @@ from typing import Literal
 
 from grader.directory import resolve_directory, get_directory_entries, collapse, copy_to_directory
 from grader.logger import LogColor
+from grader.project import TestState
 from grader.test import Test, Given
 from logger import logger
 
@@ -18,7 +19,7 @@ class ProcessState(IntEnum):
 
 
 class Student:
-    def __init__(self, archive: Path, parent_directory: Path, givens: list[Given]):
+    def __init__(self, archive: Path, parent_directory: Path, givens: list[Given], tests: list[Test]):
         self.archive: Path = archive
 
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
@@ -35,6 +36,8 @@ class Student:
         self.readme: Path | None = None
         self.makefile: Path | None = None
         self.program: Path | None = None
+
+        self.test_results: dict[str, TestState] = {test.name: TestState.NEVER for test in tests}
 
     def extract(self, gzip=True) -> None:
         if tarfile.is_tarfile(self.archive):
@@ -173,13 +176,13 @@ class Student:
         if print_test:
             print(test)
 
-        result["run_result"] = self.run(
+        process_result = self.run(
             timeout=timeout,
             arguments=test.command,
             print_stdout=print_stdout,
             insert_program_name=False
         )
-        process_result = result["run_result"]
+        result["run_result"] = process_result[0]
 
         if use_diff:
             if not test.expected == [ s.rstrip() for s in process_result[1] ]:
