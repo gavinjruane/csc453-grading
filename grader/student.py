@@ -1,5 +1,7 @@
+import difflib
 import os
 import subprocess
+import sys
 import tarfile
 from pathlib import Path
 from typing import Literal
@@ -109,42 +111,67 @@ class Student:
     def run(self,
             arguments: list[str] | None = None,
             capture_output: bool = False,
-            find_program: bool = False,
             insert_program_name: bool = True
-            ) -> tuple[bool, str]:
+            ) -> tuple[bool, list[str]]:
         if arguments is None:
             arguments = [self.program]
 
         if insert_program_name:
             arguments.insert(0, str(self.program))
 
+        captured_output: list[str] = []
         try:
-            if capture_output:
-                program_result = subprocess.run(
-                    arguments,
-                    cwd=self.directory,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True
-                )
-            else:
-                program_result = subprocess.run(
-                    arguments,
-                    cwd=self.directory
-                )
+            process = subprocess.Popen(
+                arguments,
+                cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            # program_result = subprocess.run(
+            #     arguments,
+            #     cwd=self.directory,
+            #     stdout=subprocess.PIPE,
+            #     stderr=subprocess.STDOUT,
+            #     text=True
+            # )
 
+            for line in process.stdout:
+                print(line, end="")
+                captured_output.append(line)
+
+            process.wait()
         except Exception as e:
             logger.error(f"{LogColor.BOLD}{self.name}'s program{LogColor.RESET} could not run due to exception {e}.")
             raise Exception("Program could not run.")
 
-        if program_result.returncode != 0:
+        if process.returncode != 0:
             logger.warning(f"{self.name}'s program did not run successfully.'")
 
-            return False, str(program_result.stdout)
+            return False, captured_output
         else:
             logger.info(f"{self.name}'s program ran successfully.")
 
-            return True, str(program_result.stdout)
+            return True, captured_output
 
-    def test(self, test: Test):
-        pass
+    def test(self, test: Test, print_test: bool = False, use_diff: bool = False) -> bool:
+        if print_test:
+            print(test)
+
+        run_result = self.run(
+            arguments=test.command,
+            capture_output=True,
+            insert_program_name=False
+        )
+
+        if use_diff:
+            diff = difflib.HtmlDiff()
+            diffs = list(diff.make_file(test.expected, run_result[1]))
+
+            with open(self.directory / Path(test.name + ".html"), "w") as f:
+                for line in diffs:
+                    f.write(line)
+
+        return run_result[0]
+

@@ -92,15 +92,21 @@ class Project:
             logger.critical(f"No archive at {self.submissions_archive}")
             raise Exception(f"No archive at {self.submissions_archive}")
 
-    def grade(self, wait_after_step=False, wait_at_end=False) -> None:
+    def grade(self, wait_after_step=False, wait_at_end=False, allow_skips=False) -> None:
         WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
         WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
 
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
                                 givens_directory=self.givens_directory):
+            print(f"\n{LogColor.BOLD}Student {student.name}{LogColor.RESET}")
+            if allow_skips:
+                key = input(f"Press \"s\" to skip {student.name}...")
+                if key.lower() == "s":
+                    continue
+
             student.extract()
-            if wait_after_step: input(WAIT_AFTER_STEP)
+            # if wait_after_step: input(WAIT_AFTER_STEP)
 
             print(student.get_readme())
             if wait_after_step: input(WAIT_AFTER_STEP)
@@ -119,13 +125,12 @@ class Project:
                 continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
-            result, output = student.run(
-                arguments=self.tests[0].command,
-                capture_output=True,
-                insert_program_name=False
-            )
-            logger.info(f"Student {student.name} finished with result: {result}")
-            logger.info(f"Student {student.name} finished with output: {output}")
+            # TODO: fix this to make it workable for non-test based projects
+            for test in tests(tests_directory=self.tests_directory):
+                result = student.test(test, print_test=True, use_diff=True)
+                logger.info(f"Student {student.name} test finished with result: {result}")
+                # logger.info(f"Student {student.name} test finished with output: {output}")
+                if wait_after_step: input(WAIT_AFTER_STEP)
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             if wait_at_end: input(WAIT_AT_END)
