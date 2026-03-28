@@ -3,6 +3,7 @@ import tomllib
 import zipfile
 from pathlib import Path
 from typing import Generator
+from xml.dom import XHTML_NAMESPACE
 
 from grader.configuration import Configuration
 from grader.logger import logger, LogColor
@@ -92,13 +93,19 @@ class Project:
             logger.critical(f"No archive at {self.submissions_archive}")
             raise Exception(f"No archive at {self.submissions_archive}")
 
-    def grade(self, wait_after_step=False, wait_at_end=False, allow_skips=False) -> None:
+    def grade(self, wait_after_step=False, wait_at_end=False, allow_skips=False) -> tuple[list, list, list]:
         WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
         WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
+
+        failures: list[Student] = []
+        some_errors: list[Student] = []
+        successes: list[Student] = []
 
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
                                 givens_directory=self.givens_directory):
+            issues: int = 0
+
             print(f"\n{LogColor.BOLD}Student {student.name}{LogColor.RESET}")
             if allow_skips:
                 key = input(f"Press \"s\" to skip {student.name}...")
@@ -108,13 +115,14 @@ class Project:
             student.extract()
             # if wait_after_step: input(WAIT_AFTER_STEP)
 
-            print(student.get_readme())
+            print('\n' + student.get_readme())
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             try:
                 student.make()
             except Exception as e:
                 logger.warning(f"Make finished unsuccessfully: {e}")
+                failures.append(student)
                 continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
@@ -122,19 +130,39 @@ class Project:
                 student.find_program(look_for=self.config.submissions.program)
             except Exception as e:
                 logger.warning(f"Find program finished unsuccessfully: {e}")
+                failures.append(student)
                 continue
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             # TODO: fix this to make it workable for non-test based projects
+            use_diff: bool = True
+            use_html: bool = True
             for test in tests(tests_directory=self.tests_directory):
-                result = student.test(test, print_test=True, use_diff=True)
-                logger.info(f"Student {student.name} test finished with result: {result}")
-                # logger.info(f"Student {student.name} test finished with output: {output}")
+                result = student.test(test, print_test=True, use_diff=use_diff, print_stdout=False, html_diff=use_html)
+                if result["run_result"]:
+                    logger.debug(f"Student {student.name} test finished successfully.")
+                    if use_diff and not result["diff"]:
+                        logger.info(f"Student {student.name} files differ.")
+                        if use_html:
+                            logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
+                        issues += 1
+                    else:
+                        logger.info(f"Student {student.name} files match.")
+                else:
+                    logger.debug(f"Student {student.name} test did not finish successfully.")
+                    failures.append(student)
                 if wait_after_step: input(WAIT_AFTER_STEP)
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             if wait_at_end: input(WAIT_AT_END)
             print("\n\n")
+
+            if issues == 0:
+                successes.append(student)
+            else:
+                some_errors.append(student)
+
+        return failures, some_errors, successes
 
 
 def unpack_archive(archive: Path, destination: Path, archive_type: str = "tar.gz") -> None:

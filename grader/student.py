@@ -110,7 +110,7 @@ class Student:
 
     def run(self,
             arguments: list[str] | None = None,
-            capture_output: bool = False,
+            print_stdout: bool = False,
             insert_program_name: bool = True
             ) -> tuple[bool, list[str]]:
         if arguments is None:
@@ -138,7 +138,7 @@ class Student:
             # )
 
             for line in process.stdout:
-                print(line, end="")
+                if print_stdout: print(line, end="")
                 captured_output.append(line)
 
             process.wait()
@@ -151,27 +151,41 @@ class Student:
 
             return False, captured_output
         else:
-            logger.info(f"{self.name}'s program ran successfully.")
+            logger.debug(f"{self.name}'s program ran successfully.")
 
             return True, captured_output
 
-    def test(self, test: Test, print_test: bool = False, use_diff: bool = False) -> bool:
+    def test(self,
+             test: Test,
+             print_test: bool = False,
+             use_diff: bool = False,
+             html_diff: bool = False,
+             print_stdout: bool = False
+             ) -> dict:
+        result = {}
+
         if print_test:
             print(test)
 
-        run_result = self.run(
+        result["run_result"] = self.run(
             arguments=test.command,
-            capture_output=True,
+            print_stdout=print_stdout,
             insert_program_name=False
         )
+        process_result = result["run_result"]
 
         if use_diff:
-            diff = difflib.HtmlDiff()
-            diffs = list(diff.make_file(test.expected, run_result[1]))
+            if not test.expected == [ s.rstrip() for s in process_result[1] ]:
+                result["diff"] = False
+                if html_diff:
+                    diff = difflib.HtmlDiff()
+                    diffs = list(diff.make_file(test.expected, process_result[1]))
 
-            with open(self.directory / Path(test.name + ".html"), "w") as f:
-                for line in diffs:
-                    f.write(line)
+                    with open(self.directory / Path(test.name + ".html"), "w") as f:
+                        result["html_file"] = self.directory / Path(test.name + ".html")
+                        for line in diffs:
+                            f.write(line)
+            else:
+                result["diff"] = True
 
-        return run_result[0]
-
+        return result
