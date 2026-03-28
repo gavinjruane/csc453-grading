@@ -24,9 +24,15 @@ parser.add_argument(
 parser.add_argument(
     "-i",
     "--interactive",
-    type=bool,
+    action="store_true",
     help="Whether to run the program in interactive mode",
     default=False,
+)
+parser.add_argument(
+    "--timeout",
+    type=int,
+    help="Timeout for individual program in seconds",
+    default=30,
 )
 args = parser.parse_args()
 
@@ -34,9 +40,9 @@ args = parser.parse_args()
 def main():
     project = Project(args.file)
     if args.interactive:
-        failures, some_errors, successes = project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True)
+        failures, some_errors, successes = project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True, timeout=args.timeout)
     else:
-        failures, some_errors, successes = project.grade()
+        failures, some_errors, successes = project.grade(timeout=args.timeout)
     print(f"Failures: {failures}")
     print(f"Some errors: {some_errors}")
     print(f"Successes: {successes}")

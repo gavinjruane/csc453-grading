@@ -3,7 +3,6 @@ import tomllib
 import zipfile
 from pathlib import Path
 from typing import Generator
-from xml.dom import XHTML_NAMESPACE
 
 from grader.configuration import Configuration
 from grader.logger import logger, LogColor
@@ -12,13 +11,13 @@ from grader.directory import resolve_directory
 from grader.test import Test, Given
 
 
-def students(submissions_directory: Path, outputs_directory: Path, givens_directory: Path) -> Generator[
-    Student, None, None]:
+def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given]
+             ) -> Generator[Student, None, None]:
     for archive in submissions_directory.iterdir():
         yield Student(
             archive=archive,
             parent_directory=outputs_directory,
-            givens=givens(givens_directory)
+            givens=givens
         )
 
 
@@ -93,7 +92,14 @@ class Project:
             logger.critical(f"No archive at {self.submissions_archive}")
             raise Exception(f"No archive at {self.submissions_archive}")
 
-    def grade(self, wait_after_step=False, wait_at_end=False, allow_skips=False) -> tuple[list, list, list]:
+    def grade(
+            self,
+            timeout: int,
+            wait_after_step=False,
+            wait_at_end=False,
+            allow_skips=False,
+            use_diff=True
+    ) -> tuple[list, list, list]:
         WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
         WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
 
@@ -103,7 +109,7 @@ class Project:
 
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
-                                givens_directory=self.givens_directory):
+                                givens=self.givens):
             issues: int = 0
 
             print(f"\n{LogColor.BOLD}Student {student.name}{LogColor.RESET}")
@@ -135,16 +141,13 @@ class Project:
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             # TODO: fix this to make it workable for non-test based projects
-            use_diff: bool = True
-            use_html: bool = True
             for test in tests(tests_directory=self.tests_directory):
-                result = student.test(test, print_test=True, use_diff=use_diff, print_stdout=False, html_diff=use_html)
+                result = student.test(test, timeout=timeout, print_test=True, use_diff=use_diff, print_stdout=False, html_diff=use_diff)
                 if result["run_result"]:
                     logger.debug(f"Student {student.name} test finished successfully.")
                     if use_diff and not result["diff"]:
                         logger.info(f"Student {student.name} files differ.")
-                        if use_html:
-                            logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
+                        logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
                         issues += 1
                     else:
                         logger.info(f"Student {student.name} files match.")

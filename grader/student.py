@@ -1,7 +1,6 @@
 import difflib
 import os
 import subprocess
-import sys
 import tarfile
 from pathlib import Path
 from typing import Literal
@@ -109,10 +108,13 @@ class Student:
             raise Exception("Program not found.")
 
     def run(self,
+            timeout: int,
             arguments: list[str] | None = None,
             print_stdout: bool = False,
-            insert_program_name: bool = True
+            insert_program_name: bool = True,
             ) -> tuple[bool, list[str]]:
+        global process
+
         if arguments is None:
             arguments = [self.program]
 
@@ -129,19 +131,15 @@ class Student:
                 text=True,
                 bufsize=1
             )
-            # program_result = subprocess.run(
-            #     arguments,
-            #     cwd=self.directory,
-            #     stdout=subprocess.PIPE,
-            #     stderr=subprocess.STDOUT,
-            #     text=True
-            # )
 
             for line in process.stdout:
                 if print_stdout: print(line, end="")
                 captured_output.append(line)
 
-            process.wait()
+            process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            logger.error(f"{self.name}'s program timed out.")
+            process.kill()
         except Exception as e:
             logger.error(f"{LogColor.BOLD}{self.name}'s program{LogColor.RESET} could not run due to exception {e}.")
             raise Exception("Program could not run.")
@@ -157,6 +155,7 @@ class Student:
 
     def test(self,
              test: Test,
+             timeout: int,
              print_test: bool = False,
              use_diff: bool = False,
              html_diff: bool = False,
@@ -168,6 +167,7 @@ class Student:
             print(test)
 
         result["run_result"] = self.run(
+            timeout=timeout,
             arguments=test.command,
             print_stdout=print_stdout,
             insert_program_name=False
