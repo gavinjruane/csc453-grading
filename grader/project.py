@@ -58,6 +58,7 @@ class Project:
             root=self.root_directory,
             fallback="submissions"
         )
+        self.languages: list[str] = self.config.submissions.languages
 
         self.outputs_directory: Path = resolve_directory(
             directory=self.config.outputs.directory if self.config.outputs else None,
@@ -72,8 +73,12 @@ class Project:
                 fallback="tests",
                 create_on_fail=False
             )
-            self.tests: list[Test] = tests(self.tests_directory)
-            logger.info(f"Found tests at {self.tests_directory} and imported them")
+            if self.config.tests.directory:
+                self.tests: list[Test] | None = tests(self.tests_directory)
+                logger.info(f"Found tests at {self.tests_directory} and imported them")
+            else:
+                self.tests: list[Test] | None = None
+                logger.info(f"No tests found/included.")
 
             self.givens_directory: Path | None = resolve_directory(
                 directory=self.config.tests.givens_directory if self.config.tests else None,
@@ -81,11 +86,17 @@ class Project:
                 fallback="givens",
                 create_on_fail=False
             )
-            self.givens: list[Given] = givens(self.givens_directory)
-            logger.info(f"Found givens at {self.givens_directory} and imported them")
+            if self.config.tests.givens_directory:
+                self.givens: list[Given] | None = givens(self.givens_directory)
+                logger.info(f"Found givens at {self.givens_directory} and imported them")
+            else:
+                self.givens: list[Given] | None = None
+                logger.info(f"No givens found/included.")
         else:
             self.tests_directory: Path | None = None
             self.givens_directory: Path | None = None
+            self.tests = None
+            self.givens = None
 
         self.submissions_archive: Path = Path(self.config.submissions.archive_filename)
         if self.submissions_archive.exists():
@@ -141,30 +152,31 @@ class Project:
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             # TODO: fix this to make it workable for non-test based projects
-            for test in self.tests:
-                result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
-                                      print_stdout=False, html_diff=use_diff)
-                if result["run_result"] == ProcessState.SUCCESS:
-                    logger.debug(f"Student {student.name} test finished successfully.")
-                    if use_diff and not result["diff"]:
-                        logger.info(f"Student {student.name} files differ.")
-                        logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
-                        student.test_results[test.name] = TestState.DIFF_MISMATCH
+            if self.tests is not None:
+                for test in self.tests:
+                    result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
+                                          print_stdout=False, html_diff=use_diff)
+                    if result["run_result"] == ProcessState.SUCCESS:
+                        logger.debug(f"Student {student.name} test finished successfully.")
+                        if use_diff and not result["diff"]:
+                            logger.info(f"Student {student.name} files differ.")
+                            logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
+                            student.test_results[test.name] = TestState.DIFF_MISMATCH
+                        else:
+                            logger.info(f"Student {student.name} files match.")
+                            student.test_results[test.name] = TestState.DIFF_MATCH
+                    elif result["run_result"] == ProcessState.FAILURE:
+                        logger.debug(f"Student {student.name} test did not finish successfully.")
+                        student.test_results[test.name] = TestState.INCOMPLETE
+                    elif result["run_result"] == ProcessState.TIMEOUT:
+                        logger.debug(f"Student {student.name} test timed out.")
+                        student.test_results[test.name] = TestState.TIMEOUT
                     else:
-                        logger.info(f"Student {student.name} files match.")
-                        student.test_results[test.name] = TestState.DIFF_MATCH
-                elif result["run_result"] == ProcessState.FAILURE:
-                    logger.debug(f"Student {student.name} test did not finish successfully.")
-                    student.test_results[test.name] = TestState.INCOMPLETE
-                elif result["run_result"] == ProcessState.TIMEOUT:
-                    logger.debug(f"Student {student.name} test timed out.")
-                    student.test_results[test.name] = TestState.TIMEOUT
-                else:
-                    logger.debug(f"Student {student.name} test finished with an unexpected error code.")
-                    student.test_results[test.name] = TestState.FAILURE
-                if wait_after_step: input(WAIT_AFTER_STEP)
+                        logger.debug(f"Student {student.name} test finished with an unexpected error code.")
+                        student.test_results[test.name] = TestState.FAILURE
+                    if wait_after_step: input(WAIT_AFTER_STEP)
 
-            if print_results:
+            if print_results and self.tests is not None:
                 print(f"{LogColor.BOLD}{student.name}'s results:{LogColor.RESET}")
                 print(student.results())
 

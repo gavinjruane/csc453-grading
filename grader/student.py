@@ -12,7 +12,7 @@ from logger import logger
 
 
 class Student:
-    def __init__(self, archive: Path, parent_directory: Path, givens: list[Given], tests: list[Test]):
+    def __init__(self, archive: Path, parent_directory: Path, givens: list[Given], tests: list[Test] | None):
         self.archive: Path = archive
 
         # Assuming archive is formatted like this: lastfirst_#_#_project.tar.gz
@@ -30,7 +30,8 @@ class Student:
         self.makefile: Path | None = None
         self.program: Path | None = None
 
-        self.test_results: dict[str, TestState] = {test.name: TestState.NEVER for test in tests}
+        if tests is not None:
+            self.test_results: dict[str, TestState] = {test.name: TestState.NEVER for test in tests}
 
     def extract(self, gzip=True) -> None:
         if tarfile.is_tarfile(self.archive):

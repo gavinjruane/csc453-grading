@@ -15,6 +15,7 @@ class SubmissionsConfig(BaseModel):
     archive_filename: str
     archive_type: str
     submission_type: str
+    languages: list[str]
     program: str | None = None
 
 class OutputsConfig(BaseModel):

@@ -1,4 +1,4 @@
-name = "Schedule"
+name = "LWP"
 root_directory = "../testbench"
 
 [make]
@@ -6,13 +6,13 @@ run_make = true
 use_stdout = true
 
 [submissions]
-archive_filename = '../submissions.zip'
+archive_filename = '../submissions2.zip'
 archive_type = "zip"
 submission_type = "tar.gz"
 languages = ["C"]
-program = "schedule"
+# program = "schedule"
 
 [tests]
-timeout = 30
+# timeout = 30
 # directory = '/home/gavinruane/Documents/Projects/csc453-grading/testbench/tests'
-givens_directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project1/project1_grading/givens'
+givens_directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project2/demos'
