@@ -1,15 +1,15 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from pathlib import Path
 
 from grader.logger import LogColor
 
-class TestState(IntEnum):
-    SUCCESS = 0
-    FAILURE = 1
-    PARTIAL = 2
-    INCOMPLETE = 3
-    NEVER = 4
-
+class TestState(StrEnum):
+    DIFF_MATCH = "Results match"
+    DIFF_MISMATCH = "Results do not match"
+    FAILURE = "Test failed"
+    INCOMPLETE = "Test incomplete"
+    TIMEOUT = "Test timed out"
+    NEVER = "Test never ran"
 
 class ProcessState(IntEnum):
     SUCCESS = 0

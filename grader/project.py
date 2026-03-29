@@ -105,13 +105,13 @@ class Project:
             wait_after_step=False,
             wait_at_end=False,
             allow_skips=False,
-            use_diff=True
+            use_diff=True,
+            print_results=False
     ) -> None:
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
                                 givens=self.givens,
                                 tests=self.tests):
-            issues: int = 0
 
             print(f"\n{LogColor.BOLD}Student {student.name}{LogColor.RESET}")
             if allow_skips:
@@ -120,7 +120,6 @@ class Project:
                     continue
 
             student.extract()
-            # if wait_after_step: input(WAIT_AFTER_STEP)
 
             print('\n' + student.get_readme())
             if wait_after_step: input(WAIT_AFTER_STEP)
@@ -142,7 +141,6 @@ class Project:
             if wait_after_step: input(WAIT_AFTER_STEP)
 
             # TODO: fix this to make it workable for non-test based projects
-            # test_map: dict =
             for test in self.tests:
                 result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
                                       print_stdout=False, html_diff=use_diff)
@@ -151,20 +149,24 @@ class Project:
                     if use_diff and not result["diff"]:
                         logger.info(f"Student {student.name} files differ.")
                         logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
-                        student.test_results[test.name] = TestState.PARTIAL
+                        student.test_results[test.name] = TestState.DIFF_MISMATCH
                     else:
                         logger.info(f"Student {student.name} files match.")
+                        student.test_results[test.name] = TestState.DIFF_MATCH
                 elif result["run_result"] == ProcessState.FAILURE:
                     logger.debug(f"Student {student.name} test did not finish successfully.")
-                    self.partials.append(student)
+                    student.test_results[test.name] = TestState.INCOMPLETE
                 elif result["run_result"] == ProcessState.TIMEOUT:
                     logger.debug(f"Student {student.name} test timed out.")
-                    self.partials.append(student)
+                    student.test_results[test.name] = TestState.TIMEOUT
                 else:
                     logger.debug(f"Student {student.name} test finished with an unexpected error code.")
-                    self.partials.append(student)
+                    student.test_results[test.name] = TestState.FAILURE
                 if wait_after_step: input(WAIT_AFTER_STEP)
-            if wait_after_step: input(WAIT_AFTER_STEP)
+
+            if print_results:
+                print(f"{LogColor.BOLD}{student.name}'s results:{LogColor.RESET}")
+                print(student.results())
 
             if wait_at_end: input(WAIT_AT_END)
             print("\n\n")

@@ -13,5 +13,5 @@ program = "schedule"
 
 [tests]
 timeout = 30
-directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project1/project1_grading/schedule_tests'
+directory = '/home/gavinruane/Documents/Projects/csc453-grading/testbench/tests'
 givens_directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project1/project1_grading/givens'

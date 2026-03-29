@@ -2,7 +2,6 @@ import difflib
 import os
 import subprocess
 import tarfile
-from enum import IntEnum
 from pathlib import Path
 from typing import Literal
 
@@ -191,5 +190,13 @@ class Student:
                             f.write(line)
             else:
                 result["diff"] = True
+
+        return result
+
+    def results(self) -> str:
+        result: str = ""
+        for key, value in sorted(self.test_results.items(), key=lambda item: item[1], reverse=True):
+            # BUG check sorted
+            result += f"Test {key}: {value}\n"
 
         return result
