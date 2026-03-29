@@ -8,14 +8,8 @@ from typing import Literal
 
 from grader.directory import resolve_directory, get_directory_entries, collapse, copy_to_directory
 from grader.logger import LogColor
-from grader.project import TestState
-from grader.test import Test, Given
+from grader.test import Test, Given, TestState, ProcessState
 from logger import logger
-
-class ProcessState(IntEnum):
-    SUCCESS = 0
-    FAILURE = 1
-    TIMEOUT = 2
 
 
 class Student:

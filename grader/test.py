@@ -1,7 +1,20 @@
+from enum import IntEnum
 from pathlib import Path
 
 from grader.logger import LogColor
 
+class TestState(IntEnum):
+    SUCCESS = 0
+    FAILURE = 1
+    PARTIAL = 2
+    INCOMPLETE = 3
+    NEVER = 4
+
+
+class ProcessState(IntEnum):
+    SUCCESS = 0
+    FAILURE = 1
+    TIMEOUT = 2
 
 class Test:
     def __init__(self, name: str, tests_directory: Path):

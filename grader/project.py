@@ -1,15 +1,14 @@
 import tarfile
 import tomllib
 import zipfile
-from enum import IntEnum
 from pathlib import Path
 from typing import Generator
 
 from grader.configuration import Configuration
 from grader.logger import logger, LogColor
-from grader.student import Student, ProcessState
+from grader.student import Student
 from grader.directory import resolve_directory
-from grader.test import Test, Given
+from grader.test import Test, Given, ProcessState, TestState
 
 WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
 WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
@@ -31,14 +30,6 @@ def givens(givens_directory: Path) -> list[Given]:
 
 def tests(tests_directory: Path) -> list[Test]:
     return [Test(name=test.name, tests_directory=tests_directory) for test in tests_directory.iterdir()]
-
-
-class TestState(IntEnum):
-    SUCCESS = 0
-    FAILURE = 1
-    PARTIAL = 2
-    INCOMPLETE = 3
-    NEVER = 4
 
 
 class Project:
