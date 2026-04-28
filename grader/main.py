@@ -42,7 +42,7 @@ def main():
     if args.interactive:
         project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True, print_results=True)
     else:
-        project.grade()
+        project.grade(wait_at_end=True, allow_skips=True, print_results=True)
     print(f"Failures: {project.failures}")
     print(f"Some errors: {project.partials}")
     print(f"Successes: {project.successes}")

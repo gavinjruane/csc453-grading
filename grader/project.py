@@ -13,23 +13,26 @@ from grader.test import Test, Given, ProcessState, TestState
 WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
 WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
 
-def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given], tests: list[Test]
-             ) -> Generator[Student, None, None]:
-    for archive in submissions_directory.iterdir():
-        yield Student(
-            archive=archive,
-            parent_directory=outputs_directory,
-            givens=givens,
-            tests=tests
-        )
+# def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given], tests: list[Test]
+#              ) -> Generator[Student, None, None]:
+#     for archive in submissions_directory.iterdir():
+#         yield Student(
+#             archive=archive,
+#             parent_directory=outputs_directory,
+#             givens=givens,
+#             tests=tests
+#         )
+
+def students(submissions_directory: Path, outputs_directory: Path, givens: list[Given], tests: list[Test]) -> list[Student]:
+    return sorted([Student(archive=archive, parent_directory=outputs_directory, givens=givens, tests=tests) for archive in submissions_directory.iterdir()], key=lambda student: student.name)
 
 
 def givens(givens_directory: Path) -> list[Given]:
-    return [Given(name=given.name, givens_directory=givens_directory) for given in givens_directory.iterdir()]
+    return sorted([Given(name=given.name, givens_directory=givens_directory) for given in givens_directory.iterdir()], key=lambda given: given.name)
 
 
 def tests(tests_directory: Path) -> list[Test]:
-    return [Test(name=test.name, tests_directory=tests_directory) for test in tests_directory.iterdir()]
+    return sorted([Test(name=test.name, tests_directory=tests_directory) for test in tests_directory.iterdir()], key=lambda test: test.name)
 
 
 class Project:
