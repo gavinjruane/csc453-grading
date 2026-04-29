@@ -158,7 +158,7 @@ class Project:
                 for test in self.tests:
                     use_diff: bool = True if test.type == TestType.DIFF else False
                     result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
-                                          print_stdout=False, html_diff=use_diff)
+                                          print_stdout=True, html_diff=use_diff)
                     if result["run_result"] == ProcessState.SUCCESS:
                         logger.debug(f"Student {student.name} test finished successfully.")
                         if use_diff:
