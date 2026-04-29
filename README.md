@@ -5,6 +5,7 @@ A grading program for Cal Poly CSC 453 created by **Gavin Ruane**.
 ## Installation
 
 Grader is in a development state right now, so its installation process is not elegant.
+Contact Gavin with any questions.
 
 1. Clone this repository to your local machine.
 
@@ -21,7 +22,12 @@ Grader is in a development state right now, so its installation process is not e
 5. Install the necessary third-party libraries.
 
     `pip install -r requirements.txt`
-6. 
+6. Install Grader as an editable module.
+
+    `pip install -e .`
+7. Run Grader!
+
+    `python3 grader/main.py`
 
 ## Basic Usage
 
@@ -36,9 +42,16 @@ You can also specify other options to change the Grader experience.
 | `-i`, `--interactive` | Whether to run the program in interactive mode     |
 | `--timeout TIMEOUT`   | Timeout for individual programs in seconds         |
 
+As stated previously, Grader is in development. Running Grader might mean that you need to use
+an absolute path to access the executable.
+
+`python3 /path/to/repo/csc453-grading/grader/main.py [arguments]`
+
 ### Interactive mode
 
-By default, Grader runs in a *semi-interactive* mode.
+By default, Grader runs in a *semi-interactive* mode that asks for confirmation before moving to
+the next student in a submission collection. You can run Grader in *fully-interactive* mode in which you
+will be prompted for confirmation before each test runs. This is mostly useful for debugging.
 
 ## Projects
 
