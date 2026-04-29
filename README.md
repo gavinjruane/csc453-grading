@@ -5,7 +5,8 @@ A grading program for Cal Poly CSC 453 created by **Gavin Ruane**.
 ## Installation
 
 Grader is in a development state right now, so its installation process is not elegant.
-Contact Gavin with any questions.
+Currently, Grader is designed to be used on a macOS or Linux computer.
+Windows support has not been tested and is not guaranteed.
 
 1. Clone this repository to your local machine.
 
