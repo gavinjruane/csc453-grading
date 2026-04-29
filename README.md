@@ -2,6 +2,27 @@
 
 A grading program for Cal Poly CSC 453 created by **Gavin Ruane**.
 
+## Installation
+
+Grader is in a development state right now, so its installation process is not elegant.
+
+1. Clone this repository to your local machine.
+
+    `git clone git@github.com:gavinjruane/csc453-grading.git`
+2. Navigate to the newly-created directory.
+
+    `cd csc453-grading`
+3. Create a Python virtual environment for the program.
+
+    `python -m venv .venv`
+4. Activate the virtual environment in your shell session.
+
+    `. .venv/bin/activate`
+5. Install the necessary third-party libraries.
+
+    `pip install -r requirements.txt`
+6. 
+
 ## Basic Usage
 
 To run Grader, you must specify a project file (see [Projects](#Projects)) at the minimum.
