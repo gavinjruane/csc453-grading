@@ -1,4 +1,4 @@
-from enum import IntEnum, StrEnum
+from enum import IntEnum, StrEnum, auto
 from pathlib import Path
 
 from grader.logger import LogColor
@@ -6,6 +6,7 @@ from grader.logger import LogColor
 class TestState(StrEnum):
     DIFF_MATCH = "Results match"
     DIFF_MISMATCH = "Results do not match"
+    SUCCESS = "Test passed"
     FAILURE = "Test failed"
     INCOMPLETE = "Test incomplete"
     TIMEOUT = "Test timed out"
@@ -16,11 +17,16 @@ class ProcessState(IntEnum):
     FAILURE = 1
     TIMEOUT = 2
 
+class TestType(StrEnum):
+    DIFF = "[diff]"
+    TIMING = "[timing]"
+
 class Test:
     def __init__(self, name: str, tests_directory: Path):
         self.name: str = name
         self.path: Path = tests_directory / self.name
         self.command: list[str] = Test._command_from_file(self.path)
+        self.type: TestType = Test._type_from_file(self.path)
         self.expected: list[str] = Test._content_from_file(self.path)
 
     def __repr__(self) -> str:
@@ -33,8 +39,18 @@ class Test:
             return testfile.readline().rstrip().split(" ")
 
     @classmethod
+    def _type_from_file(cls, location: Path) -> TestType:
+        with location.open("r") as testfile:
+            next(testfile)
+            try:
+                return TestType(testfile.readline().rstrip())
+            except ValueError:
+                return TestType("[diff]")
+
+    @classmethod
     def _content_from_file (cls, location: Path) -> list[str]:
         with location.open("r") as testfile:
+            next(testfile)
             next(testfile)
             return testfile.read().rstrip().split("\n")
 

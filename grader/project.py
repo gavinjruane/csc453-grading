@@ -8,7 +8,7 @@ from grader.configuration import Configuration
 from grader.logger import logger, LogColor
 from grader.student import Student
 from grader.directory import resolve_directory
-from grader.test import Test, Given, ProcessState, TestState
+from grader.test import Test, Given, ProcessState, TestState, TestType
 
 WAIT_AFTER_STEP = f"{LogColor.BOLD}Press any key to continue...{LogColor.RESET}\n"
 WAIT_AT_END = f"{LogColor.BOLD}Press any key to continue to the next student...{LogColor.RESET}\n"
@@ -119,7 +119,6 @@ class Project:
             wait_after_step=False,
             wait_at_end=False,
             allow_skips=False,
-            use_diff=True,
             print_results=False
     ) -> None:
         for student in students(submissions_directory=self.submissions_directory,
@@ -157,17 +156,26 @@ class Project:
             # TODO: fix this to make it workable for non-test based projects
             if self.tests is not None:
                 for test in self.tests:
+                    use_diff: bool = True if test.type == TestType.DIFF else False
                     result = student.test(test, timeout=self.timeout, print_test=True, use_diff=use_diff,
                                           print_stdout=False, html_diff=use_diff)
                     if result["run_result"] == ProcessState.SUCCESS:
                         logger.debug(f"Student {student.name} test finished successfully.")
-                        if use_diff and not result["diff"]:
-                            logger.info(f"Student {student.name} files differ.")
-                            logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
-                            student.test_results[test.name] = TestState.DIFF_MISMATCH
+                        if use_diff:
+                            if not result["diff"]:
+                                logger.info(f"Student {student.name} files differ.")
+                                logger.debug(f"Student {student.name} html file: {result["html_file"]}.")
+                                student.test_results[test.name] = TestState.DIFF_MISMATCH
+                            else:
+                                logger.info(f"Student {student.name} files match.")
+                                student.test_results[test.name] = TestState.DIFF_MATCH
                         else:
-                            logger.info(f"Student {student.name} files match.")
-                            student.test_results[test.name] = TestState.DIFF_MATCH
+                            if not result["other"]:
+                                logger.info(f"Student {student.name} test did not pass. (Might need manual inspection.)")
+                                student.test_results[test.name] = TestState.FAILURE
+                            else:
+                                logger.info(f"Student {student.name} test passed. (Might need manual inspection.)")
+                                student.test_results[test.name] = TestState.SUCCESS
                     elif result["run_result"] == ProcessState.FAILURE:
                         logger.debug(f"Student {student.name} test did not finish successfully.")
                         student.test_results[test.name] = TestState.INCOMPLETE

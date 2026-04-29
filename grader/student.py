@@ -7,7 +7,7 @@ from typing import Literal
 
 from grader.directory import resolve_directory, get_directory_entries, collapse, copy_to_directory
 from grader.logger import LogColor
-from grader.test import Test, Given, TestState, ProcessState
+from grader.test import Test, Given, TestState, ProcessState, TestType
 from logger import logger
 
 
@@ -119,7 +119,7 @@ class Student:
         global process
 
         if arguments is None:
-            arguments = [self.program]
+            arguments = [str(self.program)]
 
         if insert_program_name:
             arguments.insert(0, str(self.program))
@@ -136,10 +136,11 @@ class Student:
             )
 
             for line in process.stdout:
-                if print_stdout: print(line, end="")
+                if print_stdout:
+                    print(line, end="", flush=True)
                 captured_output.append(line)
 
-            process.communicate(timeout=timeout)
+            process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             logger.error(f"{self.name}'s program timed out.")
             process.kill()
@@ -170,10 +171,11 @@ class Student:
         if print_test:
             print(test)
 
+        logger.debug(f"Test type {test.type}")
         process_result = self.run(
             timeout=timeout,
             arguments=test.command,
-            print_stdout=print_stdout,
+            print_stdout=print_stdout or (True if test.type == TestType.TIMING else False),
             insert_program_name=False
         )
         result["run_result"] = process_result[0]
@@ -191,6 +193,8 @@ class Student:
                             f.write(line)
             else:
                 result["diff"] = True
+        else:
+            result["other"] = True
 
         return result
 
