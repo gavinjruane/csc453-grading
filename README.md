@@ -54,6 +54,9 @@ By default, Grader runs in a *semi-interactive* mode that asks for confirmation 
 the next student in a submission collection. You can run Grader in *fully-interactive* mode in which you
 will be prompted for confirmation before each test runs. This is mostly useful for debugging.
 
+> [!NOTE]
+> Fully-automated mode will come in a future iteration.
+
 ## Projects
 
 To avoid a massive list of command-line arguments for each grading session, Grader uses `.toml` files that set up an
