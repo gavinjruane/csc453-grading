@@ -5,7 +5,8 @@ A grading program for Cal Poly CSC 453 created by **Gavin Ruane**.
 ## Installation
 
 Grader is in a development state right now, so its installation process is not elegant.
-Contact Gavin with any questions.
+Currently, Grader is designed to be used on a macOS or Linux computer.
+Windows support has not been tested and is not guaranteed.
 
 1. Clone this repository to your local machine.
 
@@ -52,6 +53,9 @@ an absolute path to access the executable.
 By default, Grader runs in a *semi-interactive* mode that asks for confirmation before moving to
 the next student in a submission collection. You can run Grader in *fully-interactive* mode in which you
 will be prompted for confirmation before each test runs. This is mostly useful for debugging.
+
+> [!NOTE]
+> Fully-automated mode will come in a future iteration.
 
 ## Projects
 
