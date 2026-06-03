@@ -34,15 +34,21 @@ parser.add_argument(
     help="Timeout for individual program in seconds",
     default=30,
 )
+parser.add_argument(
+    "-c",
+    "--check-language",
+    action="store_true",
+    help="Whether to prompt the grader for the project language"
+)
 args = parser.parse_args()
 
 
 def main():
     project = Project(args.file, timeout=args.timeout)
     if args.interactive:
-        project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True, print_results=True)
+        project.grade(wait_after_step=True, wait_at_end=True, allow_skips=True, print_results=False, check_language=True)
     else:
-        project.grade(wait_at_end=True, allow_skips=True, print_results=True)
+        project.grade(wait_at_end=True, allow_skips=True, print_results=True, check_language=True)
     print(f"Failures: {project.failures}")
     print(f"Some errors: {project.partials}")
     print(f"Successes: {project.successes}")

@@ -29,6 +29,7 @@ class Student:
         self.readme: Path | None = None
         self.makefile: Path | None = None
         self.program: Path | None = None
+        self.language: str = "C"
 
         if tests is not None:
             self.test_results: dict[str, TestState] = {test.name: TestState.NEVER for test in tests}
@@ -54,6 +55,10 @@ class Student:
                 logger.error(f"{self.name}´s README not found.")
                 return ""
 
+        with self.readme.open("r") as r:
+            language = r.readline().rstrip()
+            if language != "C" or language != "Python":
+                self.language = "C"
         text = self.readme.read_text()
 
         return text
@@ -96,25 +101,43 @@ class Student:
 
         return
 
-    def find_program(self, look_for: str | None):
-        if look_for is not None:
-            programs = [program for program in self.directory.iterdir() if
-                        program.is_file() and os.access(program, os.X_OK) and program.name == look_for]
-        else:
+    def find_program(self, look_for: list[str], preferred_program: str | None = None, type: str = "executable"):
+        if len(look_for) == 0:
             programs = [program for program in self.directory.iterdir() if
                         program.is_file() and os.access(program, os.X_OK)]
-        if len(programs) != 0:
-            self.program = programs[0]
-            logger.info(f"{self.name}'s program (path: {self.program})")
+
+            if len(programs) != 0:
+                self.program = programs[0]
+                logger.info(f"{self.name}'s program (path: {self.program})")
+            else:
+                logger.error(f"{self.name}'s program not found.")
+                raise Exception("Program not found.")
         else:
+            for candidate in look_for:
+                programs: list[Path] = []
+
+                if type == "executable":
+                    programs = [program for program in self.directory.iterdir() if
+                                program.is_file() and os.access(program, os.X_OK) and program.name == candidate]
+                elif type == "library":
+                    programs = [program for program in self.directory.iterdir() if
+                                program.is_file() and program.name == candidate]
+
+                if len(programs) != 0:
+                    self.program = programs[0] if not preferred_program or programs[0].name == preferred_program else programs[0].rename(programs[0].parent / preferred_program)
+                    logger.info(f"{self.name}'s program (path: {self.program})")
+                    return
+
             logger.error(f"{self.name}'s program not found.")
             raise Exception("Program not found.")
+
 
     def run(self,
             timeout: int,
             arguments: list[str] | None = None,
             print_stdout: bool = False,
             insert_program_name: bool = True,
+            use_terminal: bool = False
             ) -> tuple[ProcessState, list[str]]:
         global process
 
@@ -181,7 +204,7 @@ class Student:
         result["run_result"] = process_result[0]
 
         if use_diff:
-            if not test.expected == [ s.rstrip() for s in process_result[1] ]:
+            if not [ r.casefold() for r in test.expected ] == [ s.rstrip().casefold() for s in process_result[1] ]:
                 result["diff"] = False
                 if html_diff:
                     diff = difflib.HtmlDiff()

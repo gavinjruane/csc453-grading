@@ -5,7 +5,7 @@ dependencies = [
   "colorlog",
   "pydantic"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   {name = "Gavin Ruane", email = "me@gavinruane.me"}
 ]

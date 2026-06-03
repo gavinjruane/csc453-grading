@@ -119,7 +119,8 @@ class Project:
             wait_after_step=False,
             wait_at_end=False,
             allow_skips=False,
-            print_results=False
+            print_results=False,
+            check_language=False
     ) -> None:
         for student in students(submissions_directory=self.submissions_directory,
                                 outputs_directory=self.outputs_directory,
@@ -135,18 +136,22 @@ class Project:
             student.extract()
 
             print('\n' + student.get_readme())
-            if wait_after_step: input(WAIT_AFTER_STEP)
+            if check_language:
+                student.language = input("Is this a Python or C program? ")
+
+            if student.language == "C":
+                try:
+                    student.make()
+                except Exception as e:
+                    logger.warning(f"Make finished unsuccessfully: {e}")
+                    self.failures.append(student)
+                    continue
+                if wait_after_step: input(WAIT_AFTER_STEP)
 
             try:
-                student.make()
-            except Exception as e:
-                logger.warning(f"Make finished unsuccessfully: {e}")
-                self.failures.append(student)
-                continue
-            if wait_after_step: input(WAIT_AFTER_STEP)
-
-            try:
-                student.find_program(look_for=self.config.submissions.program)
+                student.find_program(look_for=self.config.submissions.programs,
+                                     preferred_program=self.config.submissions.preferred_program,
+                                     type=self.config.submissions.type)
             except Exception as e:
                 logger.warning(f"Find program finished unsuccessfully: {e}")
                 self.failures.append(student)

@@ -1,18 +1,20 @@
 name = "LWP"
-root_directory = "../testbench"
+root_directory = "/home/gavinruane/Documents/Spring2026/work/project2"
 
 [make]
 run_make = true
 use_stdout = true
 
 [submissions]
-archive_filename = '../submissions2.zip'
+archive_filename = './submissions.zip'
 archive_type = "zip"
 submission_type = "tar.gz"
 languages = ["C"]
-# program = "schedule"
+preferred_program = "libLWP.a"
+programs = ["libLWP.a", "liblwp.a"]
+type = "library"
 
 [tests]
 # timeout = 30
-# directory = '/home/gavinruane/Documents/Projects/csc453-grading/testbench/tests'
-givens_directory = '/home/gavinruane/Documents/Fall2025/csc453_isa/projects/project2/demos'
+directory = "/home/gavinruane/Documents/Spring2026/work/project2/tests"
+givens_directory = "/home/gavinruane/Documents/Spring2026/work/project2/testbench"

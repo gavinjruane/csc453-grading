@@ -11,6 +11,7 @@ archive_type = "zip"
 submission_type = "tar.gz"
 languages = ["C"]
 program = "schedule"
+type = "executable"
 
 [tests]
 timeout = 30

@@ -16,7 +16,9 @@ class SubmissionsConfig(BaseModel):
     archive_type: str
     submission_type: str
     languages: list[str]
-    program: str | None = None
+    preferred_program: str | None = None
+    programs: list[str] = []
+    type: str
 
 class OutputsConfig(BaseModel):
     directory: str | None = None
